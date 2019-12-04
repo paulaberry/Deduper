@@ -141,10 +141,42 @@ def match_position(read_direction, positionL1R1, CIGARL1R1, positionL2R1, CIGARL
         Input from SAM col 2, 3, 5: (16, 150, 8M3S, 130, 20S3M1I3M1D5M, 15, 13M, 15, 13M) returns True.
         Input from SAM col 2, 3, 5: (16, 150, 17M2S, 150, 19M, 40, 20M, 40, 20M) returns False."""
 
-    if positionL1R1 == positionL2R1:
-        return True
-    else:
-        return False
+    if read_direction == "forward":
+        softclipL1R1 = re.findall(r"^\d+S", CIGARL1R1)
+        softclipL2R1 = re.findall(r"^\d+S", CIGARL2R1)
+        if softclipL1R1 != "":
+            softclipL1R1 = int(softclipL1R1[:-1])
+        elif softclipL1R1 == "":
+            softclipL1R1 = 0
+        if softclipL2R1 != "":
+            softclipL2R1 = int(softclipL2R1[:-1])
+        elif softclipL2R1 == "":
+            softclipL1R1 = 0
+
+        positionL1R1 = positionL1R1 - softclipL1R1
+        positionL2R1 = positionL2R1 - softclipL2R1
+        if positionL1R1 == positionL2R1:
+            return True
+        else:
+            return False
+
+    elif read_direction == "reverse":
+        softclipL1R1 = re.findall(r"\d+S$, CIGARL1R1)
+        softclipL1R2 = re.findall(r"\d+S$, CIGARL2R1)
+        if softclipL1R1 != "":
+            softclipL1R1 = int(softclipL1R1[:-1])
+        elif softclipL1R1 == "":
+            softclipL1R1 = 0
+        if softclipL2R1 != "":
+            softclipL2R1 = int(softclipL2R1[:-1])
+        elif softclipL2R1 == "":
+            softclipL2R1 = 0
+        positionL1R1 = positionL1R1 + softclipL1R1
+        positionL2R1 = positionL2R1 + softclipL2R1
+        if positionL1R1 == positionL2R1:
+            return True
+        else:
+            return False
 
     # read_direction can be "forward" or "reverse"
     #if positionL1R2 == None:
