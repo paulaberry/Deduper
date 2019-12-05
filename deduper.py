@@ -140,37 +140,62 @@ def match_position(read_direction, positionL1R1, CIGARL1R1, positionL2R1, CIGARL
         Input from SAM col 2, 3, 5: (0, 15, 17M, 15, 2S15M,  None, None, None, None) returns False.
         Input from SAM col 2, 3, 5: (16, 150, 8M3S, 130, 20S3M1I3M1D5M, 15, 13M, 15, 13M) returns True.
         Input from SAM col 2, 3, 5: (16, 150, 17M2S, 150, 19M, 40, 20M, 40, 20M) returns False."""
-
+    SL1R1, SL2R1, SL1R2, SL2R2 = 0,0,0,0 # Softclip at beginning of fwd reads is subtracted, at end of reverse reads is added to position
+    DL1R1, DL2R1, DL1R2, DL2R2 = 0,0,0,0 # Deleted nts in reverse reads is added to position
+    IL1R1, IL2R1, IL1R2, IL2R2 = 0,0,0,0 # Inserted nts in reverse reads is null to position
+    NL1R1, NL2R1, NL1R2, NL2R2 = 0,0,0,0 # Skipped regions in reverse reads is added to position
+    ML1R1, ML2R1, ML1R2, ML2R2 = 0,0,0,0 # Matched nts in reverse reads is added to position
+    positionL1R1 = int(positionL1R1)
+    positionL2R1 = int(positionL2R1)
     if read_direction == "forward":
         softclipL1R1 = re.findall(r"^\d+S", CIGARL1R1)
         softclipL2R1 = re.findall(r"^\d+S", CIGARL2R1)
-        if softclipL1R1 != "":
-            softclipL1R1 = int(softclipL1R1[:-1])
-        elif softclipL1R1 == "":
-            softclipL1R1 = 0
-        if softclipL2R1 != "":
-            softclipL2R1 = int(softclipL2R1[:-1])
-        elif softclipL2R1 == "":
-            softclipL1R1 = 0
+        print("findall gave",softclipL1R1)
+        print("findall gave",softclipL2R1)
+        if softclipL1R1 != []:
+            SL1R1 = int(softclipL1R1[0][:-1])
+        if softclipL2R1 != []:
+            softclipL2R1 = int(softclipL2R1[0][:-1])
 
-        positionL1R1 = positionL1R1 - softclipL1R1
-        positionL2R1 = positionL2R1 - softclipL2R1
+        positionL1R1 = positionL1R1 - SL1R1
+        positionL2R1 = positionL2R1 - SL2R1
         if positionL1R1 == positionL2R1:
             return True
         else:
             return False
 
     elif read_direction == "reverse":
-        softclipL1R1 = re.findall(r"\d+S$, CIGARL1R1)
-        softclipL1R2 = re.findall(r"\d+S$, CIGARL2R1)
-        if softclipL1R1 != "":
-            softclipL1R1 = int(softclipL1R1[:-1])
-        elif softclipL1R1 == "":
-            softclipL1R1 = 0
-        if softclipL2R1 != "":
-            softclipL2R1 = int(softclipL2R1[:-1])
-        elif softclipL2R1 == "":
-            softclipL2R1 = 0
+        softclipL1R1 = re.findall(r"\d+S$", CIGARL1R1)
+        softclipL1R2 = re.findall(r"\d+S$", CIGARL2R1)
+        deleteL1R1 = re.findall(r"\d+D", CIGARL1R1)
+        deleteL2R1 = re.findall(r"\d+D", CIGARL2R1)
+        insertL1R1 = re.findall(r"\d+I", CIGARL1R1)
+        insertL2R1 = re.findall(r"\d+I", CIGARL2R1)
+        skipL1R1 = re.findall(r"\d+N", CIGARL1R1)
+        skipL2R1 = re.findall(r"\d+N", CIGARL2R1)
+        matchL1R1 = re.findall(r"\d+M", CIGARL1R1)
+        matchL2R1 = re.findall(r"\d+M", CIGARL2R1)
+        if softclipL1R1 != []:
+            SL1R1 = int(softclipL1R1[0][:-1])
+        if softclipL2R1 != []:
+            SL2R1 = int(softclipL2R1[0][:-1])
+        if deleteL1R1 != []:
+            for i in deleteL1R1:
+                DL1R1 = DL1R1 + int(deleteL1R1[i][:-1])
+        if deleteL2R1 != []:
+            for i in deleteL2R1:
+                DL2R1 = DL2R1 + int(deleteL2R1[i][:-1])
+        if insertL1R1 != []:
+            for i in insertL1R1:
+                IL1R1 = IL1R1 + int(insertL1R1[i][:-1])
+        if insertL2R1 != []:
+            for i in insertL2R1:
+                IL2R1 = IL2R1 + int(insertL2R1[i][:-1])
+        if skipL1R1 != []:
+            for i in skipIL1R1:
+                g
+
+
         positionL1R1 = positionL1R1 + softclipL1R1
         positionL2R1 = positionL2R1 + softclipL2R1
         if positionL1R1 == positionL2R1:
@@ -225,7 +250,7 @@ if pairedend == False: # algorithm for non-paired end reads
     while True:
         samfile.seek(samfile_pos)
         L1R1 = samfile.readline().strip()
-        print("****" + L1R1)
+        #print("****" + L1R1)
         if L1R1 == "": # stop while loop at end of SAM file
             break
         elif L1R1.startswith("@"):
@@ -251,7 +276,7 @@ if pairedend == False: # algorithm for non-paired end reads
                 samfile_pos = samfile.tell()
                 while True: # while loop to compare chromosomes, break to top if don't match to get new L1
                     L2R1 = samfile.readline().strip().split()
-                    print(L2R1)
+                    #print(L2R1)
                     if L2R1 == []: # print L1R1 to deduped file and restart loop when end of file is reached
                         deduped_dict[L1R1[0]] = ""
                         print(separator.join(L1R1), file = deduped_file)
