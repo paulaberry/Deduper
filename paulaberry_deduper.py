@@ -46,7 +46,7 @@ writeout = bool(args.write)
 
 # optional integer arguements
 umi_length = int(args.randomers)
-
+print(writeout)
 # Warnings for incompatible arguments
 if umi_file != "None" and umi_length != 0:
     print("Choose randomer length or specify UMI list file!")
@@ -173,7 +173,7 @@ if pairedend == False: # algorithm for non-paired end reads
                 deduped_dict[duptup] = (samlist[4], str(samline)) # first entry of new chromosome into dictionary
             else:
                 duptup = (chromosome, UMI, read_direction, position)
-                print("else branch started")
+                #print("else branch started")
                 if duptup in deduped_dict:
                         if qualitysort != True:
                             print(samline, file = dupe_file)
@@ -185,7 +185,10 @@ if pairedend == False: # algorithm for non-paired end reads
                                 else:
                                     deduped_dict[duptup] = (samlist[4], str(samline))
                             else:
-                                pass
+                                if writeout == True:
+                                    print(samline, file = dupe_file)
+                                else:
+                                    pass
                 else:
                     if umi_file != "None":
                         if UMI not in UMI_dict:
