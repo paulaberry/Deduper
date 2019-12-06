@@ -17,7 +17,7 @@ conda activate bgmp_py3
 module load samtools/1.5
 
 /usr/bin/time -v samtools sort leslie_test.sam -o leslie_test.sorted.sam
-/usr/bin/time -v ./deduper.py -f leslie_test.sorted.sam \
+/usr/bin/time -v ./berry_deduper.py -f leslie_test.sorted.sam \
 -u STL96.txt \
 -w \
 -q

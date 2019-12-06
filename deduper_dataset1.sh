@@ -17,7 +17,7 @@ conda activate bgmp_py3
 module load samtools/1.5
 
 /usr/bin/time -v samtools sort /projects/bgmp/shared/deduper/Dataset1.sam -o Dataset1.sorted.sam
-/usr/bin/time -v ./paulaberry_deduper.py -f Dataset1.sorted.sam \
+/usr/bin/time -v ./berry_deduper.py -f Dataset1.sorted.sam \
 -u STL96.txt \
 -w \
 -q
