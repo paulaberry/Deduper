@@ -139,12 +139,13 @@ samfile = open(filename, "r") # make sure to start at beginning of SAM file
 
 # initialize dictionary to keep track of duplicate reads and chosen reads
 deduped_dict = {}
+duptup = "initialize" # initialize duptup
 
 if pairedend == False: # algorithm for non-paired end reads
-    duptup = "initialize" # initialize duptup
     while True:
         samline = samfile.readline().strip()
         if samline == "": # stop while loop at end of SAM file
+            #print(deduped_dict)
             for key in deduped_dict:
                 print(deduped_dict[key][1], file = deduped_file) # print out everything in the deduplicate dictionary
             break
@@ -165,29 +166,39 @@ if pairedend == False: # algorithm for non-paired end reads
                 deduped_dict[duptup] = (samlist[4], str(samline))
                 print("first sam entry into dictionary")
             elif chromosome != duptup[0]: # if we change chromosomes
-                print(samline)
                 for key in deduped_dict:
                     print(deduped_dict[key][1], file = deduped_file) # print out everything in the dedupolicate dictionary
                 deduped_dict = {} # reset dictionary to empty
-                duptup = (chromosome, UMI, read_direction, position) # start first tuple of new chromosome
-                deduped_dict[duptup] = (samlist[4], str(samline))
+                duptup = (chromosome, UMI, read_direction, position)
+                deduped_dict[duptup] = (samlist[4], str(samline)) # first entry of new chromosome into dictionary
             else:
                 duptup = (chromosome, UMI, read_direction, position)
-                #print("else branch started")
-                if umi_file != "None":
-                    if UMI not in UMI_dict:
-                        if writeout == True:
-                            print(samline, file= unknown_file)
-                elif duptup in deduped_dict:
+                print("else branch started")
+                if duptup in deduped_dict:
                         if qualitysort != True:
                             print(samline, file = dupe_file)
                         else:
                             if samlist[4] > deduped_dict[duptup][0]:
                                 if writeout == True:
                                     print(deduped_dict[duptup][1], file = dupe_file)
-                                deduped_dict[duptup] = (samlist[4], str(samline))
+                                    deduped_dict[duptup] = (samlist[4], str(samline))
+                                else:
+                                    deduped_dict[duptup] = (samlist[4], str(samline))
+                            else:
+                                pass
                 else:
-                    deduped_dict[duptup] = (samlist[4], str(samline))
+                    if umi_file != "None":
+                        if UMI not in UMI_dict:
+                            if writeout == True:
+                                print(samline, file= unknown_file)
+                            else:
+                                pass
+                        else:
+                            duptup = (chromosome, UMI, read_direction, position)
+                            deduped_dict[duptup] = (samlist[4], str(samline))
+                    else:
+                        duptup = (chromosome, UMI, read_direction, position)
+                        deduped_dict[duptup] = (samlist[4], str(samline))
 
 
 elif pairedend == True:
