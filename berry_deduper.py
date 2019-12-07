@@ -121,15 +121,15 @@ if umi_file != "None":
 
 # Initialize files for writing out duplicated and unknown reads
 if writeout == True:
-    dupe_filename = "duplicate." + str(filename)
+    dupe_filename = filename[:-3] + "_duplicates" + ".sam"
     dupe_file = open(dupe_filename, "w")
     dupe_file.seek(0) # make sure to start at beginning of file
-    unknown_filename = "unknown." + str(filename)
+    unknown_filename = filename[:-3] + "_unknown" + ".sam"
     unknown_file = open(unknown_filename, "w")
     unknown_file.seek(0) # make sure to start at the beginning of the file
 
 # Initialize deduplicated read file
-deduped_filename = "deduped." + str(filename)
+deduped_filename = str(filename[:-3]) + "_deduped" + ".sam"
 deduped_file = open(deduped_filename, "w")
 deduped_file.seek(0) # make sure starting at beginning of file
 
