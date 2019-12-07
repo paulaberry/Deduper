@@ -78,8 +78,6 @@ def findposition(read_direction, pos, CIGAR):
         softclip = re.findall(r"^\d+S", CIGAR)
         if softclip != []:
             S = int(softclip[0][:-1])
-        if softclip != []:
-            softclip = int(softclip[0][:-1])
         pos = int(pos) - S
         return pos
 
@@ -164,7 +162,7 @@ if pairedend == False: # algorithm for non-paired end reads
             if duptup == "initialize": # first SAM read option
                 duptup = (chromosome, UMI, read_direction, position)
                 deduped_dict[duptup] = (samlist[4], str(samline))
-                print("first sam entry into dictionary")
+                #print("first sam entry into dictionary")
             elif chromosome != duptup[0]: # if we change chromosomes
                 for key in deduped_dict:
                     print(deduped_dict[key][1], file = deduped_file) # print out everything in the dedupolicate dictionary
@@ -205,50 +203,90 @@ if pairedend == False: # algorithm for non-paired end reads
 
 
 elif pairedend == True:
-    duptup = (-1, -1, -1, -1, -1) # initialize duptup
+    while True:
+        headerline = samfile.readline().strip()
+        if headerline == "": # stop while loop at end of SAM file
+            break
+        elif headerline.startswith("@"):
+            print(str(headerline), file = deduped_file) # print header lines to deduped file
+        else: # when starting read lines continue to next while loop
+            break
     while True:
         samlineR1 = samfile.readline().strip()
         samlineR2 = samfile.readline().strip()
-        if samlineR1 == "": # stop while loop at end of SAM file
+        if samlineR1 == "": # when end of file is reached
+            for key in deduped_dict:
+                print(deduped_dict[key][1], file = deduped_file)
+                print(deduped_dict[key][3], file = deduped_file) # print out everything in the deduplicate dictionary
             break
-        elif samlineR1.startswith("@"):
-            print(str(samlineR1), file = deduped_file) # print header lines to deduped file
-            if samlineR2.startswith("@"):
-                print(str(samlineR2), file = deduped_file) # print header lines to deduped file
-            else:
-                samlineR1 = samlineR2
-                samlineR2 = samfile.readline().strip()
-                continue
+        elif chromosome != duptup[0]: # if we change chromosomes
+            for key in deduped_dict:
+                print(deduped_dict[key][1], file = deduped_file)
+                print(deduped_dict[key][3], file = deduped_file) # print out everything in the deduplicate dictionary
+            deduped_dict = {} # reset dictionary to empty
+            duptup = (chromosome, UMI, read_directionR1, read_directionR2, positionR1, positionR2)
+            deduped_dict[duptup] = (samlistR1[4], str(samlineR1), samlistR2[4], str(samlineR2))  # first entry of new chromosome into dictionary
         else:
+            #print(samline)
             samlistR1 = samlineR1.split()
             samlistR2 = samlineR2.split()
             UMI = samlistR1[0][-umi_length:]
             chromosome = samlistR1[2]
-            if chromosome != duptup[0]: # if we change chromosomes
-                for i in deduped_dict:
-                    print(deduped_dict[i][1], file = deduped_file)
-                    print(deduped_dict[i][2], file = deduped_file) # print out everything in the dedupolicate dictionary
-                deduped_dict = {} # reset dictionary to empty
-            read_direction = "+" # default read direction is + strand
+            read_directionR1 = "+" # default read direction is + strand
+            read_directionR2 = "+" # default read direction is + strand
             if ((int(samlistR1[1]) & 16) == 16):
-                read_direction = "-" # set read direction if L1 is mapped to - strand
-            positionR1 = findposition(read_direction, int(samlistR1[3]), samlistR1[5])
-            positionR2 = findposition(read_direction, int(samlistR2[3]), samlistR2[5])
-            duptup = (chromosome, UMI, strand, positionR1, positionR2)
-            if umi_file != "None" and writeout == True and UMI not in UMI_dict:
-                print(samlineR1, file = unknown_file)
-                print(samlineR2, file = unknown_file)
-            if duptup in deduped_dict:
-                if qualitysort != True:
-                    print(samlineR1, file = dupe_file)
-                    print(samlineR2, file = dupe_file)
-                else:
-                    if mean(samlistR1[10], samlistR2[10]) > deduped_dict[duptup][0]:
-                        if writeout == True:
-                            print(deduped_dict[duptup][1], file = dupe_file)
-                        deduped_dict[duptup] = (samlistR1[10], str(samlineR1), samlistR2[10], str(samlineR2))
+                read_directionR1 = "-" # set read direction if L1 is mapped to - strand
+            if ((int(samlistR2[1]) & 16) == 16):
+                read_directionR2 = "-" # set read direction if L1 is mapped to - strand
+            positionR1 = findposition(read_directionR1, int(samlistR1[3]), samlistR1[5])
+            positionR2 = findposition(read_directionR2, int(samlistR2[3]), samlistR2[5])
+
+            if duptup == "initialize": # first SAM read option
+                duptup = (chromosome, UMI, read_directionR1, read_directionR2, positionR1, positionR2)
+                deduped_dict[duptup] = (samlistR1[4], str(samlineR1), samlistR2[4], str(samlineR2))
+                #print("first sam entry into dictionary")
+            elif chromosome != duptup[0]: # if we change chromosomes
+                for key in deduped_dict:
+                    print(deduped_dict[key][1], file = deduped_file) # print out everything in the dedupolicate dictionary
+                    print(deduped_dict[key][3], file = deduped_file)
+                deduped_dict = {} # reset dictionary to empty
+                duptup = (chromosome, UMI, read_directionR1, read_directionR2, positionR1, positionR2)
+                deduped_dict[duptup] = (samlistR1[4], str(samlineR1), samlistR2[4], str(samlineR2)) # first entry of new chromosome into dictionary
             else:
-                deduped_dict[duptup] = (mean(samlistR1[4] , samlistR2[4]), str(samlineR1), str(samlineR2))
+                duptup = (chromosome, UMI, read_directionR1, read_directionR2, positionR1, positionR2)
+                #print("else branch started")
+                if duptup in deduped_dict:
+                        if qualitysort != True:
+                            print(samlineR1, file = dupe_file)
+                            print(samlineR2, file = dupe_file)
+                        else:
+                            if mean(samlistR1[4], samlistR2[4]) > mean(deduped_dict[duptup][0],deduped_dict[duptup][2]):
+                                if writeout == True:
+                                    print(deduped_dict[duptup][1], file = dupe_file)
+                                    print(deduped_dict[duptup][3], file = dupe_file)
+                                    deduped_dict[duptup] = (samlistR1[4], str(samlineR1), samlistR2[4], str(samlineR2))
+                                else:
+                                    deduped_dict[duptup] = (samlistR1[4], str(samlineR1), samlistR2[4], str(samlineR2))
+                            else:
+                                if writeout == True:
+                                    print(samlineR1, file = dupe_file)
+                                    print(samlineR2, file = dupe_file)
+                                else:
+                                    pass
+                else:
+                    if umi_file != "None":
+                        if UMI not in UMI_dict:
+                            if writeout == True:
+                                print(samlineR1, file = unknown_file)
+                                print(samlineR2, file = unknown_file)
+                            else:
+                                pass
+                        else:
+                            duptup = (chromosome, UMI, read_directionR1, read_directionR2, positionR1, positionR2)
+                            deduped_dict[duptup] = (samlistR1[4], str(samlineR1), samlistR2[4], str(samlineR2))
+                    else:
+                        duptup = (chromosome, UMI, read_directionR1, read_directionR2, positionR1, positionR2)
+                        deduped_dict[duptup] = (samlistR1[4], str(samlineR1), samlistR2[4], str(samlineR2))
 # close all the files
 if writeout == True:
     dupe_file.close()
